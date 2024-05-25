@@ -1,0 +1,12 @@
+.input {
+    outline: none !important;
+}
+
+.form {
+    outline: none !important;
+}
+
+.btn:focus {
+    outline: none;
+  box-shadow: none;
+}

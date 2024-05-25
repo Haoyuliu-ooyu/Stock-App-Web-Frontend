@@ -1,0 +1,334 @@
+<div>
+    
+    <!-- not found alert -->
+    <div *ngIf="notFound" class="no-result-error col-12 my-1 mt-3">
+        <div class="row justify-content-center my-2 mx-1">
+            <div class="col-lg-9 col-md-12">
+                <div class="alert alert-danger text-center alert-dismissible show" role="alert">
+                    No data found. Please enter a valid ticker
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" (click)="alertClose()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- error alert -->
+    <div *ngIf="error" class="col-12 my-1 mt-3 text-center">
+        <div class="row justify-content-center my-2 mx-1">
+            <div class="col-lg-9 col-md-12">
+                <div class="alert alert-danger text-center alert-dismissible show" role="alert">
+                    API Internal Server Error Status: {{errorMsg}}.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" (click)="errorAlertClose()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- added to watchlist alert -->
+    <div *ngIf="addedToWatchlist" class="col-12 my-1 mt-3 text-center">
+        <div class="row justify-content-center my-2 mx-1">
+            <div class="col-lg-9 col-md-12">
+                <div class="alert alert-success text-center alert-dismissible show" role="alert">
+                    {{ticker}} added to watchlist.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" (click)="alertClose()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- removed from watchlist alert -->
+    <div *ngIf="removedFromWatchlist" class="col-12 my-1 mt-3 text-center">
+        <div class="row justify-content-center my-2 mx-1">
+            <div class="col-lg-9 col-md-12">
+                <div class="alert alert-danger text-center alert-dismissible show" role="alert">
+                    {{ticker}} removed from watchlist.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" (click)="alertClose()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- sold succesfully alert -->
+    <div *ngIf="soldSuccessfully" class="col-12 my-1 mt-3 text-center">
+        <div class="row justify-content-center my-2 mx-1">
+            <div class="col-lg-9 col-md-12">
+                <div class="alert alert-danger text-center alert-dismissible show" role="alert">
+                    {{ticker}} sold successfully
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" (click)="alertClose()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- bought successfully alert-->
+    <div *ngIf="boughtSuccessfully" class="col-12 my-1 mt-3 text-center">
+        <div class="row justify-content-center my-2 mx-1">
+            <div class="col-lg-9 col-md-12">
+                <div class="alert alert-success text-center alert-dismissible show" role="alert">
+                    {{ticker}} bought successfully
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" (click)="alertClose()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- spinner -->
+    <div *ngIf="showSpinner&&!loaded&&!notFound&&!error" class="col-12 mt-3 text-center">
+        <mat-spinner class="mx-auto my-2" [diameter]="40"></mat-spinner>
+    </div>
+
+    <!-- transaction modal -->
+    <ng-template #buy let-modal>
+        <div class="modal-header">
+            <div class="modal-title">
+                <div class="fs-6">{{ticker}}</div>
+            </div>
+            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+        </div>
+        <div class="modal-body mx-3">
+            <div class="my-1 fs-6">Current Pice: {{quoteData.c}}</div>
+            <div class="my-1 fs-6">Moeny in wallet: ${{balance}}</div>
+            <form ngSubmit="onBuy()" class="d-flex my-1 fs-6">
+                <div class="align-self-center">Quantity: </div>
+                <input [formControl]="modalQuantity" class="form-control" type="number" min="0" value="0"/>
+            </form>
+            <div *ngIf="errorBuy" class="my-1 fs-6">
+                <div class=" text-danger">No enough money in wallet!</div>
+            </div>
+        </div>
+        <div class="modal-footer justify-content-between">
+            <div class="">
+                Total: {{modalTotal}}
+            </div>
+            <button class="btn btn-success mx-1 px-4" (click)="onBuy()" [ngClass]="{'disabled':errorBuy}">Buy</button>
+        </div>
+    </ng-template>
+    <ng-template #sell let-modal>
+        <div class="modal-header">
+            <div class="modal-title">
+                <div class="fs-6">{{ticker}}</div>
+            </div>
+            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+        </div>
+        <div class="modal-body mx-3">
+            <div class="my-1 fs-6">Current Pice: {{quoteData.c}}</div>
+            <div class="my-1 fs-6">Moeny in wallet: ${{balance}}</div>
+            <form ngSubmit="onBuy()" class="d-flex my-1 fs-6">
+                <div class="align-self-center">Quantity: </div>
+                <input [formControl]="modalQuantity" class="form-control" type="number" min="0" value="0"/>
+            </form>
+            <div *ngIf="errorSell" class="my-1 fs-6">
+                <div class=" text-danger">You cannot sell the stocks that you don't have!</div>
+            </div>
+        </div>
+        <div class="modal-footer justify-content-between">
+            <div class="">
+                Total: {{modalTotal}}
+            </div>
+            <button class="btn btn-success mx-1 px-4" (click)="onSell()" [ngClass]="{'disabled':errorSell}">Sell</button>
+        </div>
+    </ng-template>
+
+
+    <!-- profile dashboard -->
+    <div *ngIf="loaded&&!error&&!notFound">
+        <div class="mt-3 mx-auto justify-content-center align-items-center text-center col-lg-9 col-md-9 col-sm-12">
+            <div class="row mx-auto text-center">
+                <div class="col-5 mx-auto text-center justify-content-start my-1">
+                    <div class="d-flex mx-auto my-1 justify-content-center lh-sm">
+                        <p class="fs-3 my-auto">{{profileData.ticker}}</p>
+                        <button *ngIf="!watching" class="border-0 bg-white" (click)="editWatchlist()"><i class="bi bi-star fs-5"></i></button>
+                        <button *ngIf="watching" class="border-0 bg-white" (click)="editWatchlist()"><i class="bi bi-star-fill fs-5 text-warning"></i></button>
+                    </div>
+                    <div class="fs-5 fw-light mx-auto my-1">{{profileData.name}}</div>
+                    <div class="mx-auto my-1">{{profileData.exchange}}</div>
+                    <div class="d-flex my-1 justify-content-center flex-nowrap">
+                        <button class="mx-1 my-1 px-1 bg-success text-light border-0 py-1 px-3 fs-6 rounded-2" (click)="open(buy)">Buy</button>
+                        <button *ngIf="owning" class="mx-1 my-1 px-1 bg-danger text-light border-0 py-1 px-3 fs-6 rounded-2" (click)="open(sell)">Sell</button>
+                    </div>
+
+                </div>
+                <div class="col px-1 py-1 my-1 justify-content-start">
+                    <div class="mx-auto" style="max-height: 150px;">
+                        <img src="{{profileData.logo}}" class="img-fluid" style="max-height: 150px;">
+                    </div>
+                </div>
+                <div class="col-5 mx-auto text-center my-1">
+                    <div class="d-flex justify-content-center my-2 align-items-center"> <!-- Align items center for vertical alignment -->
+                        <p class="fs-3 my-auto" [ngClass]="{'text-success': positive, 'text-danger': !positive}">{{quoteData.c}}</p>
+                    </div>
+                    <div class="row justify-content-center my-1 gx-0 gx-lg-2 align-items-center my-1"> 
+                        <div class="col-lg-auto col-12 d-flex justify-content-center my-1"> 
+                            <div class="d-flex justify-content-center align-items-center my-auto">
+                                <i [ngClass]="{
+                                    'bi': true,
+                                    'bi-caret-up-fill': positive,
+                                    'text-success': positive,
+                                    'bi-caret-down-fill': !positive,
+                                    'text-danger': !positive,
+                                    'me-1 me-lg-0': true
+                                    }" class="my-auto"></i>
+                                <p class="fs-5 fw-light my-auto" [ngClass]="{'text-success': positive, 'text-danger': !positive}">{{quoteData.d}}</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-auto col-12 d-flex justify-content-center my-1">
+                            <p class="fs-5 fw-light my-auto" [ngClass]="{'text-success': positive, 'text-danger': !positive}">({{quoteData.dp}}%)</p>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center my-1 align-items-center">{{quoteData.t}}</div> <!-- Align items center for vertical alignment -->
+                </div>
+            </div>
+            <p class="fs-6 fw-bold text-center mx-auto my-4" [ngClass]="{'text-success':marketOpen(), 'text-danger':!marketOpen()}">{{marketText}}</p>
+        </div>
+        <div class="col-lg9 col-md-9 col-sm-12 mx-auto my-1">
+            <mat-tab-group animationDuration="0ms">
+                <mat-tab label="Summary">
+                    <div class="row mt-2 mx-1">
+                        <div class="col-lg-6 col-md-6 col-sm-12 my-3">
+                            <div class="row">
+                                <div class="mx-auto my-3 col-lg-6 col-md-6 col-sm-12 flex-column text-center align-items-center">
+                                    <div class="d-flex justify-content-center"><div class="fw-bold">High Price: &nbsp;&nbsp;</div><div class="">{{quoteData.h}}</div></div>                                    
+                                    <div class="d-flex justify-content-center"><div class="fw-bold">Low Price: &nbsp;&nbsp;</div><div class="">{{quoteData.l}}</div></div>
+                                    <div class="d-flex justify-content-center"><div class="fw-bold">Open Price: &nbsp;&nbsp;</div><div class="">{{quoteData.o}}</div></div>
+                                    <div class="d-flex justify-content-center"><div class="fw-bold">Prev Close: &nbsp;&nbsp;</div><div class="">{{quoteData.pc}}</div></div>
+                                </div>
+                                <div class="col-lg-6 col-md-6 col-sm-12"></div>
+                            </div>
+                            <div class="row">
+                                <div class="flex-column text-center mx-auto col-12 mt-2">
+                                    <p class="fs-5 fw-bold text-decoration-underline mb-3">About The Company</p>
+                                    <div class="d-flex text-center my-1 justify-content-center"><p class="fw-bold">IPO Start Date:&nbsp;&nbsp;</p><p class="">{{profileData.ipo}}</p></div>                         
+                                    <div class="d-flex text-center my-1 justify-content-center"><p class="fw-bold">Industry:&nbsp;&nbsp;</p><p class="">{{profileData.finnhubIndustry}}</p></div>                       
+                                    <div class="d-flex text-center my-1 justify-content-center"><p class="fw-bold">Webpage:&nbsp;&nbsp;</p><a class="" target="_blank" rel="noopener noreferrer" href="{{profileData.weburl}}">{{profileData.weburl}}</a></div>
+                                    <p class="text-center fw-bold">Company Peers:</p>
+                                    <div *ngIf="peersData.length > 0" class="peers-container d-flex flex-wrap align-items-center text-center justify-content-center">
+                                        <ng-container *ngFor="let peer of peersData; let isLast = last">
+                                            <span>
+                                            <a href="/search/{{peer}}" (click)="navigateToPeer(peer, $event)">{{ peer }}</a>
+                                            <ng-container *ngIf="!isLast">, </ng-container><!-- Add comma separator except after the last item -->
+                                            </span>
+                                        </ng-container>
+                                        </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                        <div class="col-lg-6 col-md-6 col-sm-12 text-center my-3 mx-auto">
+                            <highcharts-chart
+                            class="mx-auto"
+                            [Highcharts]="HighchartsHourly"
+                            [options]="chartOptionsHourly"
+                            [oneToOne]="true"
+                            style="width: 100%; height: 100%; display: block;">
+                            </highcharts-chart>
+                        </div>
+                    </div>
+                </mat-tab>
+                <mat-tab label="Top News">
+                    <div class="container mt-3">
+                      <div class="row">
+                        <div class="col-sm-12 col-md-6 col-lg-6 mb-4 pe-auto" *ngFor="let newsItem of newsData" (click)="openNews(content, newsItem)">
+                          <div class="card news-card h-100 rounded-2 border-1">
+                            <div class="row g-0">
+                              <div class="col-md-4 col-sm-12">
+                                <div class="d-flex m-3 justify-content-center align-items-center">
+                                    <img src="{{newsItem.image}}" class="img-fluid rounded" alt="...">
+                                </div>
+                              </div>
+                              <div class="col-md-8 col-sm-12 d-flex justify-content-center align-items-center p-1">
+                                <h5 class="card-title">{{newsItem.headline}}</h5>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <ng-template #content let-modal>
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <div class="fs-4 fw-bold">{{selectedNews.source}}</div>
+                                <div>{{formatDateModal(selectedNews.datetime)}}</div>
+                            </div>
+                            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="fs-6 fw-bold my-1">{{selectedNews.headline}}</div>
+                            <div class="my-1">{{selectedNews.summary}}</div>
+                            <div class="d-flex fw-light my-1"><p>For more details click&nbsp;</p><a href="{{selectedNews.url}}" target="_blank" rel="noopener noreferrer" >here</a></div>
+                            <div class="rounded border border-1 m-1 mt-4 p-3">
+                                <div class="mt-2 mb-3 fs-5">Share</div>
+                                <div class="d-flex fs-1 mx-1">
+                                    <a class="twitter-share-button my-auto"href="https://twitter.com/intent/tweet?text={{selectedNews.headline}}&url={{selectedNews.url}}" target="_blank" rel="noopener noreferrer"><i style="color:black" class="my-auto bi bi-twitter-x"></i></a>
+                                    <div
+                                    class=" m-0 mx-1 p-0 border-0 btn fb-share-button fs-1 d-flex align-items-start"
+                                    data-href="https://developers.facebook.com/docs/plugins/"
+                                    data-layout="button"
+                                    data-size="large">
+                                    <a target="_blank" rel="noopener noreferrer" href="{{selectedNews.fb}}" class="fb-xfbml-parse-ignore"><i class="bi bi-facebook"></i></a>
+                                  </div>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-template>
+                  </mat-tab>
+                <mat-tab label="Charts">
+                    <div>
+                        <highcharts-chart
+                        [Highcharts]="HighchartsHistory"
+                        [constructorType]="'stockChart'"
+                        [options]="chartOptionsHistory"
+                        [oneToOne]="true"
+                        style="width: 100%; height: 600px; display: block;">
+                        </highcharts-chart>
+                    </div>
+                </mat-tab>
+                <mat-tab label="Insights" class="mt-2 mx-2">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="col-lg-6 col-md-6 col-sm-12 text-center mx-auto">
+                                <div class="fs-4 my-3">Insider Sentiments</div>
+                                <div class="row my-2 fs-6 border-bottom lh-lg">
+                                    <div class="col fw-bold">{{profileData.name}}</div>
+                                    <div class="col fw-bold">MSPR</div>
+                                    <div class="col fw-bold">Change</div>
+                                </div>
+                                <div class="row my-2 fs-6 border-bottom lh-lg">
+                                    <div class="col fw-bold">Total</div>
+                                    <div class="col">{{insiderData.totalMSPR}}</div>
+                                    <div class="col">{{insiderData.totalChange}}</div>
+                                </div>
+                                <div class="row my-2 fs-6 border-bottom lh-lg">
+                                    <div class="col fw-bold">Positive</div>
+                                    <div class="col">{{insiderData.posMSPR}}</div>
+                                    <div class="col">{{insiderData.posChange}}</div>
+                                </div>
+                                <div class="row my-2 fs-6 border-bottom lh-lg">
+                                    <div class="col fw-bold">Negative</div>
+                                    <div class="col">{{insiderData.negMSPR}}</div>
+                                    <div class="col">{{insiderData.negChange}}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 col-md-6 col-sm-12 my-2 mt-3">
+                            <highcharts-chart
+                            [Highcharts]="HighchartsReco"
+                            [options]="chartOptionsReco"
+                            [oneToOne]="true"
+                            style="width: 100%; height: 400px; display: block;">
+                            </highcharts-chart>
+                        </div>
+                        <div class="col-lg-6 col-md-6 col-sm-12">
+                            <highcharts-chart
+                            [Highcharts]="HighchartsEarning"
+                            [options]="chartOptionsEarning"
+                            [oneToOne]="true"
+                            style="width: 100%; height: 400px; display: block;">
+                            </highcharts-chart>
+                        </div>
+                    </div>
+                </mat-tab>
+              </mat-tab-group>
+        </div>
+    </div>
+</div>
+

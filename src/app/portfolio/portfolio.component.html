@@ -1,0 +1,148 @@
+<div class="mx-2">
+
+    <!-- sold succesfully alert -->
+    <div *ngIf="soldSuccessfully" class="col-12 my-1 text-center">
+        <div class="row justify-content-center my-2 mx-1">
+            <div class="col-lg-9 col-md-12">
+                <div class="alert alert-danger text-center alert-dismissible show" role="alert">
+                    {{modalItem.ticker}} sold successfully
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" (click)="alertClose()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- bought successfully alert-->
+    <div *ngIf="boughtSuccessfully" class="col-12 my-1 text-center">
+        <div class="row justify-content-center my-2 mx-1">
+            <div class="col-lg-9 col-md-12">
+                <div class="alert alert-success text-center alert-dismissible show" role="alert">
+                    {{modalItem.ticker}} bought successfully
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" (click)="alertClose()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 col-md-9 col-sm-12 mx-auto mt-4">
+        <div class="fs-2 my-4">My Portfolio</div>
+        <div *ngIf="!isLoading" class="fs-6 my-3">
+            Money in Wallet: ${{balance}}
+        </div>
+        <div *ngIf="isLoading" class="col-12 mt-5 text-center">
+            <mat-spinner  class="mx-auto my-1" [diameter]="30"></mat-spinner>
+        </div>
+        <div *ngIf="empty" class="no-result-error col-12 mt-5">
+            <div class="row justify-content-center my-4 mx-2">
+                <div class="col-12">
+                    <div class="alert alert-warning text-center alert-dismissible show" role="alert">
+                        Currently you don't have any stock.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div *ngIf="!empty&&!isLoading">
+            <div *ngFor="let modalItem of portfolio; let i = index" class="card my-3">
+                <div class="card-header bg-light">
+                    <div class="my-auto mt-1 fs-6">
+                        {{ modalItem.ticker }}
+                        <span class="fs-6 fw-light mx-1">{{ modalItem.name }}</span>
+                    </div>
+                </div>
+                <div class="card-body row mx-1 my-1 py-1">
+                    <div class="col-lg-6 col-md-6 col-sm-12">
+                        <div class="row fs-6 my-1">
+                            <div class="col">Quantity:</div>
+                            <div class="col">{{modalItem.quantity}}</div>
+                        </div>
+                        <div class="row fs-6 my-1">
+                            <div class="col">Avg. Cost/ Share:</div>
+                            <div class="col">{{modalItem.avgCost}}</div>
+                        </div>
+                        <div class="row fs-6 my-1">
+                            <div class="col">TotalCost:</div>
+                            <div class="col">{{modalItem.totalCost}}</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-md-6 col-sm-12">
+                        <div class="row fs-6 my-1">
+                            <div class="col">Change:</div>
+                            <div class="col d-flex" [ngClass]="{'text-success':modalItem.positive, 'text-danger':modalItem.negative}">
+                                <div *ngIf="modalItem.positive||modalItem.negative"><i [ngClass]="{'bi':true, 'bi-caret-up-fill':modalItem.positive,'bi-caret-down-fill':modalItem.negative, 'my-auto':true}"></i></div>
+                                {{modalItem.change}}
+                            </div>
+                        </div>
+                        <div class="row fs-6 my-1">
+                            <div class="col">Current Price:</div>
+                            <div class="col" [ngClass]="{'text-success':modalItem.positive, 'text-danger':modalItem.negative}">{{modalItem.currentPrice}}</div>
+                        </div>
+                        <div class="row fs-6 my-1">
+                            <div class="col">Market Value:</div>
+                            <div class="col" [ngClass]="{'text-success':modalItem.positive, 'text-danger':modalItem.negative}">{{modalItem.currentValue}}</div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex">
+                        <button class="btn btn-primary mx-1 px-4" (click)="open(buy, modalItem, i)">Buy</button>
+                        <button class="btn btn-danger mx-1 px-4" (click)="open(sell, modalItem, i)">Sell</button>
+                    </div>
+                </div>
+              </div>
+        </div>
+        <ng-template #buy let-modal>
+            <div class="modal-header">
+                <div class="modal-title">
+                    <div class="fs-6">{{modalItem.ticker}}</div>
+                </div>
+                <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+            </div>
+            <div class="modal-body mx-3">
+                <div class="my-1 fs-6">Current Pice: {{modalItem.currentPrice}}</div>
+                <div class="my-1 fs-6">Moeny in wallet: ${{balance}}</div>
+                <form ngSubmit="onBuy()" class="d-flex my-1 fs-6">
+                    <div class="align-self-center">Quantity: </div>
+                    <input [formControl]="modalQuantity" class="form-control" type="number" min="0" value="0"/>
+                </form>
+                <div *ngIf="errorBuy" class="my-1 fs-6">
+                    <div class=" text-danger">No enough money in wallet!</div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div class="">
+                    Total: {{modalTotal}}
+                </div>
+                <button class="btn btn-success mx-1 px-4" (click)="onBuy()" [ngClass]="{'disabled':errorBuy}">Buy</button>
+            </div>
+        </ng-template>
+        <ng-template #sell let-modal>
+            <div class="modal-header">
+                <div class="modal-title">
+                    <div class="fs-6">{{modalItem.ticker}}</div>
+                </div>
+                <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+            </div>
+            <div class="modal-body mx-3">
+                <div class="my-1 fs-6">Current Pice: {{modalItem.currentPrice}}</div>
+                <div class="my-1 fs-6">Moeny in wallet: ${{balance}}</div>
+                <form ngSubmit="onBuy()" class="d-flex my-1 fs-6">
+                    <div class="align-self-center">Quantity: </div>
+                    <input [formControl]="modalQuantity" class="form-control" type="number" min="0" value="0"/>
+                </form>
+                <div *ngIf="errorSell" class="my-1 fs-6">
+                    <div class=" text-danger">You cannot sell the stocks that you don't have!</div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div class="">
+                    Total: {{modalTotal}}
+                </div>
+                <button class="btn btn-success mx-1 px-4" (click)="onSell()" [ngClass]="{'disabled':errorSell}">Sell</button>
+            </div>
+        </ng-template>
+    </div>
+    
+</div>
